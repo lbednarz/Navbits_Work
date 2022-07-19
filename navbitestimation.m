@@ -19,6 +19,8 @@ sync = [0 1 0 1 1 0 0 0 0 0];
 bits_1= bmat(~isnan(bmat(3,:)));
 bits_2 = bmatalt(~isnan(bmatalt(3,:)));
 
+[pstart,check] = findsync(bits_1);
+
 % decode bits
 trellis = poly2trellis(7,[171 133]);
 sym_1 = convenc(bits_1,trellis);
@@ -33,7 +35,6 @@ startbit_1 = strfind(bits_1,sync);
 startbit_2 = strfind(bits_2,sync);
 check_1_bit = diff(startbit_1);
 check_2_bit = diff(startbit_2);
-
 
 % de-interleve
 bits_deint_1 = [];

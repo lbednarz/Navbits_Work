@@ -36,6 +36,7 @@ for j = 1:tchan
     end
 end
 
+bmat = sign(Ip);
 % Re-encode to binary 
 bmatalt = bmat*-1;
 bmat(bmat == -1) = 0; % case 1

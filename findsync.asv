@@ -1,0 +1,18 @@
+function [pstart,check] = findsync(bits, searchStartOffset)
+
+sync = [0 1 0 1 1 0 0 0 0 0];
+pstart = xcorr(bits, sync);
+
+% determine a threshold cross-correlation that suggests a sync pattern
+flag = find(...
+        abs(pstart) > 8)' + ...
+        searchStartOffset;
+
+check = diff(flag);
+pstart = pstart(check == 250);
+
+if isempty(pstart)
+    disp(['Could not find valid preambles in channel '!']);
+end
+
+
