@@ -26,22 +26,23 @@ if dataset == 2
     tchan = tchan(2);
 
     for i = 1:tchan
-        trackData(i,:) =trackData.gale1b.channel(i).;%#ok<SAGROW> 
+        trackdata(i,:) =trackData.gale1b.channel(i).promptCode; %#ok<SAGROW> 
     end
 
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData.gale1b.channel, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackdata, tchan, "bit_ones");
 end
 
 %% find preambles 
 
 % extract bits
-bits_1= bmat(~isnan(bmat(3,:)));
-bits_2 = bmatalt(~isnan(bmatalt(3,:)));
-
-[pstart,check] = findsync(bits_1, "bits");
-[pstart_alt,check_alt] = findsync(bits_2,"bits");
-
+for i = 1:tchan
+    bits_1= bmat(~isnan(bmat(3,:)));
+    bits_2 = bmatalt(~isnan(bmatalt(3,:)));
+    
+    [pstart,check] = findsync(bits_1, "bits");
+    [pstart_alt,check_alt] = findsync(bits_2,"bits");
+end
 % decode bits
 trellis = poly2trellis(7,[171 133]);
 sym_1 = convenc(bits_1,trellis);
