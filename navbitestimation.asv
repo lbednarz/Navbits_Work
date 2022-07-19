@@ -26,11 +26,11 @@ if dataset == 2
     tchan = tchan(2);
 
     for i = 1:tchan
-        trackdata(i,:) =trackData.gale1b.channel(i).promptCode; %#ok<SAGROW> 
+        trackData(i,:) =trackData.gale1b.channel(i).;%#ok<SAGROW> 
     end
 
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackdata, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackData.gale1b.channel, tchan, "bit_ones");
 end
 
 %% find preambles 

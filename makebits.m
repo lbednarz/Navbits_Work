@@ -26,13 +26,13 @@ function [bits, bits_alt] = makebits(correlationData, tchan, arg)
 %--------------------------------------------------------------------------
 navbit = zeros(tchan,1000);
 navbit_skip = [];
-navbitrel = NaN.*ones(tchan,length(correlationData(1).promptCode));
+navbitrel = NaN.*ones(tchan,length(correlationData(1,:)));
 
 if arg == "bit_twos"
 
     for i = 1:1:tchan
      
-        I_P = correlationData(i).promptCode;
+        I_P = correlationData(i,:);
         x = find(I_P(1:end-1)>0 & I_P(2:end) < 0);
         y = find(I_P(1:end-1)<0 & I_P(2:end) > 0);
         z = [x,y];
@@ -46,7 +46,6 @@ if arg == "bit_twos"
         
         navbit_skip = [navbit_skip;nc]; %#ok<AGROW> 
         navbitrel(i,1:length(navbit(i,nc:end))) = navbit(i,nc:end); % take relevant navbits 
-        Ip(i,:) = I_P;  %#ok<AGROW> 
         navbitrel(i,1:length(navbit(i,nc:end))) = Ip(navbitrel(i,1:length(navbit(i,nc:end))));
         navbitrel(i,:) = Ip(i,:);
 
@@ -74,11 +73,7 @@ end
 
 if arg == "bit_ones"
 
-    for i = 1:1:tchan
-        Ip(i,:) = correlationData(i).promptCode;
-    end
-
-    bits = sign(Ip);
+    bits = sign(correlationData);
     bits_alt = -1*bits;
     bits(bits == -1) = 0; % case 1
     bits_alt(bits_alt == -1) = 0; % case 2

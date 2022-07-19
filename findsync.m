@@ -1,4 +1,4 @@
-function [pstart,check] = findsync(bits)
+function [pstart,check] = findsync(bits, arg)
 %--------------------------------------------------------------------------
 % Description:
 %     
@@ -11,6 +11,9 @@ function [pstart,check] = findsync(bits)
 % Inputs: 
 % 
 %     bits - the navigation bits in 1's and 0's
+%     
+%     arg - temporary option to pick a theory of how the sync flagging
+%     works.
 %
 % Retuns:
 % 
@@ -21,15 +24,32 @@ function [pstart,check] = findsync(bits)
 %--------------------------------------------------------------------------
 sync = [0 1 0 1 1 0 0 0 0 0];
 
-pstart = xcorr(bits, sync);
+if arg == "bits"
+    pstart = xcorr(bits, sync);
+    
+    % determine a threshold cross-correlation that suggests a sync pattern
+    th = max(pstart);
+    flag = find(abs(pstart) >= th);
+    
+    check = diff(flag);
+    pstart = pstart(check == 130);
+end
 
-% determine a threshold cross-correlation that suggests a sync pattern
-th = max(pstart);
-flag = find(abs(pstart) >= th);
+if arg == "symbols"
+    % decode bits into symbols
+    trellis = poly2trellis(7,[171 133]);
+    sym = convenc(bits,trellis);  
 
-check = diff(flag);
-pstart = pstart(check == 250);
-
+    % then carry out regular correlation process
+    pstart = xcorr(sym, sync);
+    
+    % determine a threshold cross-correlation that suggests a sync pattern
+    th = max(pstart);
+    flag = find(abs(pstart) >= th);
+    
+    check = diff(flag);
+    pstart = pstart(check == 130);
+end
 
 if isempty(pstart)
     disp('Could not find valid sync pattern in channel!');
