@@ -35,9 +35,6 @@ end
 
 %% find preambles 
 
-tail = zeros(1,6);
-sync = [0 1 0 1 1 0 0 0 0 0];
-
 % extract bits
 bits_1= bmat(~isnan(bmat(3,:)));
 bits_2 = bmatalt(~isnan(bmatalt(3,:)));
@@ -68,7 +65,6 @@ for i = 1:floor(length(decoded_1)/240)
     bits_deint_1 = horzcat(bits_deint_1,reshape(page_1',1,[])); %#ok<AGROW> 
     bits_deint_2 = horzcat(bits_deint_2,reshape(page_2',1,[])); %#ok<AGROW> 
 end
-
 % 
 % %runoff = length(decoded_1)-floor(length(decoded)/240)*240; % left over symbols
 % 

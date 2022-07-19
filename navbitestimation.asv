@@ -35,9 +35,6 @@ end
 
 %% find preambles 
 
-tail = zeros(1,6);
-sync = [0 1 0 1 1 0 0 0 0 0];
-
 % extract bits
 bits_1= bmat(~isnan(bmat(3,:)));
 bits_2 = bmatalt(~isnan(bmatalt(3,:)));
