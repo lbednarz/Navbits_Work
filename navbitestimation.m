@@ -36,34 +36,36 @@ end
 %% find preambles 
 
 % extract bits
-bits_1= bmat(~isnan(bmat(3,:)));
-bits_2 = bmatalt(~isnan(bmatalt(3,:)));
-
-[pstart,check] = findsync(bits_1, "bits");
-[pstart_alt,check_alt] = findsync(bits_2,"bits");
-
-% decode bits
-trellis = poly2trellis(7,[171 133]);
-sym_1 = convenc(bits_1,trellis);
-sym_2 = convenc(bits_2,trellis);
-
-tb = 240;
-decoded_1 = vitdec(sym_1,trellis,tb,'trunc','hard');
-decoded_2 = vitdec(sym_2,trellis,tb,'trunc','hard');
-
-% de-interleve
-bits_deint_1 = [];
-bits_deint_2 = [];
-
-for i = 1:floor(length(decoded_1)/240)
-    deint_1 = decoded_1((i-1)*240+1:240*i); % grab one interleaved frame 
-    deint_2 = decoded_2((i-1)*240+1:240*i);
+for j = 1:1
+    bits_1= bmat(~isnan(bmat(j,:)));
+    bits_2 = bmatalt(~isnan(bmatalt(j,:)));
     
-    page_1 = reshape(deint_1,30,8);
-    page_2 = reshape(deint_2,30,8);
+    [pstart,check] = findsync(bits_1, "bits");
+    [pstart_alt,check_alt] = findsync(bits_2,"bits");
 
-    bits_deint_1 = horzcat(bits_deint_1,reshape(page_1',1,[])); %#ok<AGROW> 
-    bits_deint_2 = horzcat(bits_deint_2,reshape(page_2',1,[])); %#ok<AGROW> 
+    % decode bits
+    trellis = poly2trellis(7,[171 133]);
+    sym_1 = convenc(bits_1,trellis);
+    sym_2 = convenc(bits_2,trellis);
+    
+    tb = 240;
+    decoded_1 = vitdec(sym_1,trellis,tb,'trunc','hard');
+    decoded_2 = vitdec(sym_2,trellis,tb,'trunc','hard');
+    
+    % de-interleve
+    bits_deint_1 = [];
+    bits_deint_2 = [];
+    
+    for i = 1:floor(length(decoded_1)/240)
+        deint_1 = decoded_1((i-1)*240+1:240*i); % grab one interleaved frame 
+        deint_2 = decoded_2((i-1)*240+1:240*i);
+        
+        page_1 = reshape(deint_1,30,8);
+        page_2 = reshape(deint_2,30,8);
+    
+        bits_deint_1 = horzcat(bits_deint_1,reshape(page_1',1,[])); %#ok<AGROW> 
+        bits_deint_2 = horzcat(bits_deint_2,reshape(page_2',1,[])); %#ok<AGROW> 
+    end
 end
 % 
 % %runoff = length(decoded_1)-floor(length(decoded)/240)*240; % left over symbols

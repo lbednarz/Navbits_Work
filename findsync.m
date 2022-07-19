@@ -48,7 +48,7 @@ if arg == "symbols"
     flag = find(abs(pstart) >= th);
     
     check = diff(flag);
-    pstart = pstart(check == 130);
+    pstart = pstart(check == 250);
 end
 
 if isempty(pstart)
