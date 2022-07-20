@@ -22,7 +22,8 @@ function [pstart,check] = findsync(bits, arg)
 %     check - the distance between sync flags
 %
 %--------------------------------------------------------------------------
-sync = [0 1 0 1 1 0 0 0 0 0];
+%sync = [0 1 0 1 1 0 0 0 0 0]; % sync in binary form
+sync = [1 -1 1 -1 -1  1 1 1 1 1];
 
 if arg == "bits"
     pstart = xcorr(bits, sync);

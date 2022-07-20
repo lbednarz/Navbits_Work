@@ -1,8 +1,9 @@
 clc; clear; close all
 
-dataset = 1; % change this to pick from available datasets
+dataset = 2; % change this to pick from available datasets
 
 addpath(genpath('C:\Users\logan\Desktop\FGI-GSRx')) % add all subfolders to execution
+addpath(genpath('C:\Users\logan\Desktop\Navbit_Work')) % add all subfolders to execution
 
 if dataset == 1
     load('.\trackResultsBungled.mat')
@@ -33,8 +34,29 @@ if dataset == 2
     [bmat, bmatalt] = makebits(trackdata, tchan, "bit_ones");
 end
 
-%% find preambles 
+if dataset == 3
+    load('C:\Users\logan\Desktop\Navbit_Work\E1SDR\GNSS_SDR_GalileoE1-master\trackingResults.mat')
+    
+    settings.numberOfChannels = 6;
+    activeChnList = find([trackResults.status] ~= '-');
 
+    stat = [];
+    for i = 1:6
+     stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
+    end
+    
+    tchan = sum(stat == "T");
+    for i = 1:tchan
+        trackData(i,:) = trackResults(i).data_I_P; 
+    end
+    % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
+    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+
+end
+
+%% find preambles 
+ 
 % extract bits
 for j = 1:1
     bits_1= bmat(~isnan(bmat(j,:)));
@@ -42,6 +64,14 @@ for j = 1:1
     
     [pstart,check] = findsync(bits_1, "bits");
     [pstart_alt,check_alt] = findsync(bits_2,"bits");
+
+    % re-encode into binary
+    bits_1(bits_1 == -1) = 1;
+    bits_1(bits_1 == 0) = 1;
+    bits_1(bits_1 == 1) = 0;
+    bits_2(bits_2 == -1) = 1;
+    bits_2(bits_2 == 0) = 1;
+    bits_2(bits_2 == 1) = 0;
 
     % decode bits
     trellis = poly2trellis(7,[171 133]);

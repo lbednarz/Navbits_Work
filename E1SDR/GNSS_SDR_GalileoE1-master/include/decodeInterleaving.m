@@ -25,7 +25,7 @@ for channelNr = activeChnList
             (10 + FirstPageStartNr + settings.symbolRate * (i-1) : ...
             FirstPageStartNr + settings.symbolRate*i-1);
         
-        % Convert tracking results to symbol.(240 symbolds)
+        % Convert tracking results to symbol.(240 symbols)
         if invertSymbol(channelNr) == 0
             onePageDataBeforeInter (onePageDataBeforeInter > 0 ) = 0;
             onePageDataBeforeInter (onePageDataBeforeInter < 0 ) = 1;
