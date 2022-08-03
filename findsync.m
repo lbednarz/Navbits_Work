@@ -28,11 +28,11 @@ if arg == "bits"
     pstart = xcorr(bits, sync);
     
     % determine a threshold cross-correlation that suggests a sync pattern
-    th = 9;
+    th = 10;
     flag = find(abs(pstart) >= th);
     
     check = diff(flag);
-    pstart = pstart(check == 130);
+    %pstart = pstart(check == 130);
 end
 
 if arg == "symbols"

@@ -26,33 +26,13 @@ function [bits, bits_alt] = makebits(correlationData, tchan, arg)
 %--------------------------------------------------------------------------
 navbit = zeros(tchan,1000);
 navbit_skip = [];
-navbitrel = NaN.*ones(tchan,length(correlationData(1,:)));
+navbitrel = NaN.*correlationData;
 
 if arg == "bit_twos"
 
-    for i = 1:1:tchan
-     
-        I_P = correlationData(i,:);
-        x = find(I_P(1:end-1)>0 & I_P(2:end) < 0);
-        y = find(I_P(1:end-1)<0 & I_P(2:end) > 0);
-        z = [x,y];
-        z = sort(z);
-        b = diff(z);
-        c = rem(b,2);
-        a = find(c==0);
-    
-        nc = a(1);
-        navbit(i,1:length(z)) = z;
-        Ip 
-        navbit_skip = [navbit_skip;nc]; %#ok<AGROW> 
-        navbitrel(i,1:length(navbit(i,nc:end))) = navbit(i,nc:end); % take relevant navbits 
-        navbitrel(i,1:length(navbit(i,nc:end))) = Ip(navbitrel(i,1:length(navbit(i,nc:end))));
-        navbitrel(i,:) = Ip(i,:);
-
-    end
-
-    bmat = NaN * navbitrel;
+    bmat = NaN * correlationData;
     for j = 1:tchan
+        navbitrel(j,1:length(correlationData(j,:))) = correlationData(j,:);
         bitstream = navbitrel(j,:);
         bitstream = bitstream(~isnan(navbitrel(j,:))); % just the non NaN entries of bitstream
         odd = 1:2:length(bitstream);
@@ -61,11 +41,7 @@ if arg == "bit_twos"
         end
     end
 
-% Re-encode to binary 
 bmatalt = bmat*-1;
-bmat(bmat == -1) = 0; % case 1
-bmatalt(bmatalt == -1) = 0; % case 2
-
 bits = bmat;
 bits_alt = bmatalt;
 
@@ -75,9 +51,17 @@ if arg == "bit_ones"
 
     bits = sign(correlationData);
     bits_alt = -1*bits;
-    bits(bits == -1) = 0; % case 1
-    bits_alt(bits_alt == -1) = 0; % case 2
+    
+end
 
+if arg == "sum"
+
+    bmat = NaN * correlationData;
+    for i = 1:tchan
+        Ip = correlationData(i,:);
+        bmat(i,1:length(Ip)) = Ip(1:2:end) + Ip(2:2:end);
+    end
+    
 end
 
 

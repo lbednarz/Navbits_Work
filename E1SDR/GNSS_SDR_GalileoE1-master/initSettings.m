@@ -35,7 +35,7 @@ settings.skipNumberOfBytes     = 10;
 % the post-processing mode  
     
 % Data type used to store one sample
-settings.dataType           = 'int8';
+settings.dataType           = 'int16';
 settings.fileName           = ...
    'D:\接收机资料\中频数据\L125_III1b_210s_L1.bin';
 % File Types
@@ -47,8 +47,8 @@ settings.fileType           = 2;
 settings.IF                 = 0e6;        %[Hz]
 settings.carrFreqBasis      = 1575.42e6;  %[Hz]
 settings.codeFreqBasis      = 1.023e6;    %[Hz]
-settings.samplingFreq       = 20e6;       %[Hz]
-settings.Datalength         = 1;          %[bytes]
+settings.samplingFreq       = 5e6;       %[Hz]
+settings.Datalength         = 2;          %[bytes]
 settings.symbolRate         = int32 (250);%[bits/s]
  
 % Define number of chips in a code period

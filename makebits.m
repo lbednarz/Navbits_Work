@@ -54,4 +54,15 @@ if arg == "bit_ones"
     
 end
 
+if arg == "sum"
+    bmat = NaN * zeros(tchan, length(correlationData(1,:))*.5);
+    for i = 1:tchan
+        Ip = correlationData(i,:);
+        bmat(i,1:length(Ip)/2) = Ip(1:2:end) + Ip(2:2:end);
+    end
+    bits = sign(bmat);
+    bits(bits == 0) = 1;
+    bits_alt = -1*bits;
+end
+
 

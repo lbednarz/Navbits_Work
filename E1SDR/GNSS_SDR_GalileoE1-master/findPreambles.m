@@ -86,6 +86,7 @@ for channelNr = activeChnList
     index = find(...
         abs(tlmXcorrResult(xcorrLength : xcorrLength * 2 - 1)) > 8)' + ...
         searchStartOffset;
+    index_store = [];
 
 %% Analyze detected preamble like patterns ================================
     for i = 1:size(index) % For each occurrence
@@ -95,7 +96,6 @@ for channelNr = activeChnList
         %page).
         
         index2 = index - index(i);
-        
         if (~isempty(find(index2 == 250, 1)))
             
             firstPage(channelNr) = index(i);

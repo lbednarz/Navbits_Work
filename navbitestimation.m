@@ -1,6 +1,6 @@
 clc; clear; close all
 
-dataset = 2; % change this to pick from available datasets
+dataset = 1; % change this to pick from available datasets
 
 addpath(genpath('C:\Users\logan\Desktop\FGI-GSRx')) % add all subfolders to execution
 addpath(genpath('C:\Users\logan\Desktop\Navbit_Work')) % add all subfolders to execution
@@ -17,7 +17,7 @@ if dataset == 1
         trackData(i,:) = trackResults(i).I_P;%#ok<SAGROW> 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackData, tchan, "sum");
 end
 
 if dataset == 2
@@ -31,7 +31,7 @@ if dataset == 2
     end
 
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackdata, tchan, "bit_twos");
+    [bmat, bmatalt] = makebits(trackdata, tchan, "sum");
 end
 
 if dataset == 3
@@ -50,12 +50,12 @@ if dataset == 3
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackData, tchan, "sum");
     [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
 
 end
 
-if dataset == 4
+if dataset == 4 
     load('OAKBAT.mat')
     
     settings.numberOfChannels = 6;
@@ -71,20 +71,29 @@ if dataset == 4
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackData, tchan, "sum");
     [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
 
 end
 %% find preambles 
- 
+
+pstarth = NaN * zeros(tchan,length(trackData(1,:))/2); % the h's on the end mean "hold" since we're going to be populating this NaN matrix w our flagging results 
+pstart_alth = pstarth; checkh = pstarth; check_alth = pstarth;
 % extract bits
-for j = 1:1
+for j = 1:tchan
     bits_1= bmat(~isnan(bmat(j,:)));
     bits_2 = bmatalt(~isnan(bmatalt(j,:)));
     
-    [pstart,check] = findsync(bits_1, "bits");
-    [pstart_alt,check_alt] = findsync(bits_2,"bits");
-
+    [pstart,check] = ...
+        findsync(bits_1, "bits");
+    [pstart_alt,check_alt] = ...
+        findsync(bits_2,"bits");
+    
+    pstarth(j,1:length(pstart)) = pstart;
+    checkh(j,1:length(check)) = check;
+    pstart_alth(j,1:length(pstart_alt)) = pstart_alt;
+    check_alth(j,1:length(check_alt)) = check_alt;
+    
     % re-encode into binary
     bits_1(bits_1 == -1) = 1;
     bits_1(bits_1 == 0) = 1;
