@@ -22,14 +22,13 @@ function [pstart,check] = findsync(bits, arg)
 %     check - the distance between sync flags
 %
 %--------------------------------------------------------------------------
-%sync = [0 1 0 1 1 0 0 0 0 0]; % sync in binary form
 sync = [1 -1 1 -1 -1  1 1 1 1 1];
 
 if arg == "bits"
     pstart = xcorr(bits, sync);
     
     % determine a threshold cross-correlation that suggests a sync pattern
-    th = max(pstart);
+    th = 9;
     flag = find(abs(pstart) >= th);
     
     check = diff(flag);

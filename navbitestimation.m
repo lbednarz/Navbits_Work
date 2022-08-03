@@ -31,7 +31,7 @@ if dataset == 2
     end
 
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackdata, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackdata, tchan, "bit_twos");
 end
 
 if dataset == 3
@@ -55,6 +55,26 @@ if dataset == 3
 
 end
 
+if dataset == 4
+    load('OAKBAT.mat')
+    
+    settings.numberOfChannels = 6;
+    activeChnList = find([trackResults.status] ~= '-');
+
+    stat = [];
+    for i = 1:6
+     stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
+    end
+    
+    tchan = sum(stat == "T");
+    for i = 1:tchan
+        trackData(i,:) = trackResults(i).data_I_P; 
+    end
+    % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
+    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+
+end
 %% find preambles 
  
 % extract bits
