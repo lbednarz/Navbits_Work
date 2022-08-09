@@ -1,4 +1,4 @@
-function [pstart,check] = findsync(bits, arg)
+function [corr_result,check,firstPage] = findsync(bits, arg)
 %--------------------------------------------------------------------------
 % Description:
 %     
@@ -25,14 +25,24 @@ function [pstart,check] = findsync(bits, arg)
 sync = [1 -1 1 -1 -1  1 1 1 1 1];
 
 if arg == "bits"
-    pstart = xcorr(bits, sync);
+    corr_result = xcorr(bits, sync);
     
     % determine a threshold cross-correlation that suggests a sync pattern
-    th = 10;
-    flag = find(abs(pstart) >= th);
+    th = 8;
+    flag = find(abs(corr_result) >= th);
+
+%     pstart = strfind(bits,sync);
+%     check = diff(pstart);
     
     check = diff(flag);
-    %pstart = pstart(check == 130);
+    
+    for i = 1:flag
+        flag2 = flag - flag(i);
+        if (~isempty(find(flag2 == 250, 1)))
+            firstPage = flag(i);
+            break;          
+        end
+    end
 end
 
 if arg == "symbols"
@@ -51,7 +61,7 @@ if arg == "symbols"
     pstart = pstart(check == 250);
 end
 
-if isempty(pstart)
+if isempty(firstPage)
     disp('Could not find valid sync pattern in channel!');
 end
 
