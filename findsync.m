@@ -23,19 +23,22 @@ function [corr_result,check,firstPage] = findsync(bits, arg)
 %
 %--------------------------------------------------------------------------
 sync = [1 -1 1 -1 -1  1 1 1 1 1];
+firstpage = []; 
 
 if arg == "bits"
-    corr_result = xcorr(bits, sync);
+    [corr_result,lags] = xcorr(bits, sync);
     
-    % determine a threshold cross-correlation that suggests a sync pattern
-    th = 8;
-    flag = find(abs(corr_result) >= th);
+    % the dicumentation of xcorr helps understand this, but we're only 
+    % intersted in shifting forward, or right, when looking for syncs 
+    corr_result = corr_result(lags>=0);
+    lags = lags(lags>=0);
 
-%     pstart = strfind(bits,sync);
-%     check = diff(pstart);
-    
+    % determine a threshold cross-correlation that suggests a sync pattern
+    th = 9;
+    flag = lags(abs(corr_result) >= th);
+
     check = diff(flag);
-    
+
     for i = 1:flag
         flag2 = flag - flag(i);
         if (~isempty(find(flag2 == 250, 1)))
