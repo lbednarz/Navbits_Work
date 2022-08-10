@@ -23,7 +23,7 @@ function [corr_result,check,firstPage] = findsync(bits, arg)
 %
 %--------------------------------------------------------------------------
 sync = [1 -1 1 -1 -1  1 1 1 1 1];
-firstpage = []; 
+firstPage = []; 
 
 if arg == "bits"
     [corr_result,lags] = xcorr(bits, sync);
@@ -34,12 +34,12 @@ if arg == "bits"
     lags = lags(lags>=0);
 
     % determine a threshold cross-correlation that suggests a sync pattern
-    th = 9;
+    th = 8;
     flag = lags(abs(corr_result) >= th);
 
     check = diff(flag);
 
-    for i = 1:flag
+    for i = 1:length(flag)
         flag2 = flag - flag(i);
         if (~isempty(find(flag2 == 250, 1)))
             firstPage = flag(i);
@@ -61,7 +61,7 @@ if arg == "symbols"
     flag = find(abs(pstart) >= th);
     
     check = diff(flag);
-    pstart = pstart(check == 250);
+    pstart = pstart(check == 250); %#ok<NASGU> 
 end
 
 if isempty(firstPage)

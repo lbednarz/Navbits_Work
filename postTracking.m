@@ -17,7 +17,7 @@ if dataset == 1
         trackData(i,:) = trackResults(i).I_P;%#ok<SAGROW> 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "sum");
+    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
 end
 
 if dataset == 2
@@ -87,13 +87,8 @@ for j = 1:tchan
     [pstart,check,firstPage(j)] = ...
         findsync(bits_1, "bits");
     [pstart_alt,check_alt,firstPage_alt(j)] = ...
-        findsync(bits_2,"bits");
+        findsync(bits_2,"bits"); %#ok<SAGROW> 
     
-    pstarth(j,1:length(pstart)) = pstart;
-    checkh(j,1:length(check)) = check;
-    pstart_alth(j,1:length(pstart_alt)) = pstart_alt;
-    check_alth(j,1:length(check_alt)) = check_alt;
-
     % re-encode into binary
     bits_1(bits_1 == -1) = 1;
     bits_1(bits_1 == 0) = 1;
@@ -102,27 +97,15 @@ for j = 1:tchan
     bits_2(bits_2 == 0) = 1;
     bits_2(bits_2 == 1) = 0;
 
-    % decode bits
-    trellis = poly2trellis(7,[171 133]);
-    sym_1 = convenc(bits_1,trellis);
-    sym_2 = convenc(bits_2,trellis);
-    
-    tb = 240;
-    decoded_1 = vitdec(sym_1,trellis,tb,'trunc','hard');
-    decoded_2 = vitdec(sym_2,trellis,tb,'trunc','hard');
-    
-    % de-interleve
-    bits_deint_1 = [];
-    bits_deint_2 = [];
-    
-    for i = 1:floor(length(decoded_1)/240)
-        deint_1 = decoded_1((i-1)*240+1:240*i); % grab one interleaved frame 
-        deint_2 = decoded_2((i-1)*240+1:240*i);
-        
-        page_1 = reshape(deint_1,30,8);
-        page_2 = reshape(deint_2,30,8);
-    
-        bits_deint_1 = horzcat(bits_deint_1,reshape(page_1',1,[])); %#ok<AGROW> 
-        bits_deint_2 = horzcat(bits_deint_2,reshape(page_2',1,[])); %#ok<AGROW> 
-    end
+    % get deinterleved symbols
+    dis_1 = makepages(bits_1,firstPage(j));
+    dis_2 = makepages(bits_2,firstPage_alt(j));
+
+    % use viterbi method to error correct
+    L = 7; 
+    signal = 'gale1b';
+    trellis = polyToTrellis(L,signal);
+    tblen = 240;
+    vitbit_1 = viterbiDecoding(dis_1,trellis,tblen);
+
 end

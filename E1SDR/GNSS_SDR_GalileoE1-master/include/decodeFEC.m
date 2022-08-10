@@ -28,7 +28,7 @@ for channelNr = activeChnList
         symbolRate=settings.symbolRate-10;
         symbols = decodeInterResult(channelNr).data(symbolRate * (i-1)+1:symbolRate * i);
         
-        % Convert tracking results to symbol.(240 symbolds)
+        % Convert tracking results to symbol.(240 symbols)
         symbols (symbols == 1 ) =  -1;
         symbols (symbols == 0 ) =   1;
         
