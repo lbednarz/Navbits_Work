@@ -101,7 +101,7 @@ for j = 1:tchan
     dis_1 = makepages(bits_1,firstPage(j));
     dis_2 = makepages(bits_2,firstPage_alt(j));
     
-    % decode symbols into bits using viterbi methods
+    % decode symbols into bits using viter
     vit_bit = viterbiGalileo(dis_1);
 
 end

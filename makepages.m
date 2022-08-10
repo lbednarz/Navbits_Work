@@ -23,27 +23,19 @@ function [dis] = makepages(bits, firstPage)
 
 bits = bits(firstPage:end);
 
-for j = 0:floor(bits/130)
+for j = 1:floor(length(bits)/250)
 
-% decode bits
-    bitpage = bits(j*130 + 11:130*(j+1));
-    trellis = poly2trellis(7,[171 133]);
-    %sym = convenc(bitpage,trellis);
-    sym = bits(j*250 + 11:250*(j+1));
-
-    %tb = 240/2;
-    %decoded = vitdec(sym,trellis,tb,'trunc','hard');
-    decoded = sym;
+    sym = bits((j-1)*250 + 11:250*j);
 
     % de-interleve
     bits_deint= [];
     
-    for i = 1:floor(length(decoded)/240)
-        deint = decoded((i-1)*240+1:240*i); % grab one interleaved frame 
+    for i = 1:floor(length(sym)/240)
+        deint = sym((i-1)*240+1:240*i); % grab one interleaved frame 
         
         page = reshape(deint,30,8);
     
         bits_deint = horzcat(bits_deint,reshape(page',1,[])); %#ok<AGROW> 
     end
-    dis(j*240+1:(j+1)*240) = bits_deint;
+    dis((j-1)*240+1:j*240) = bits_deint;
 end
