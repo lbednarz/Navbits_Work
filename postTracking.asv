@@ -1,12 +1,12 @@
 clc; clear; close all
 
-dataset = 1; % change this to pick from available datasets
+dataset = 3; % change this to pick from available datasets
 
 addpath(genpath('C:\Users\logan\Desktop\FGI-GSRx')) % add all subfolders to execution
-addpath(genpath('C:\Users\logan\Desktop\Navbit_Work')) % add all subfolders to execution
+addpath(genpath('/home/loganbednarz/Documents/GitHub')) % add all subfolders to execution
 
 if dataset == 1
-    load('.\trackResultsBungled.mat')
+    load('trackResultsBungled.mat')
     stat = [];
     for i = 1:12
      stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
@@ -21,7 +21,7 @@ if dataset == 1
 end
 
 if dataset == 2
-    load('.\trackData_GalileoE1_Chapter4.mat')
+    load('trackData_GalileoE1_Chapter4.mat')
 
     tchan = size(trackData.gale1b.channel); % channels that contain tracking data
     tchan = tchan(2);
@@ -35,8 +35,7 @@ if dataset == 2
 end
 
 if dataset == 3
-    load('C:\Users\logan\Desktop\Navbit_Work\E1SDR\GNSS_SDR_GalileoE1-master\trackingResults.mat')
-    
+    load('trackingResults.mat')
     settings.numberOfChannels = 6;
     activeChnList = find([trackResults.status] ~= '-');
 
@@ -101,7 +100,11 @@ for j = 1:tchan
     dis_1 = makepages(bits_1,firstPage(j));
     dis_2 = makepages(bits_2,firstPage_alt(j));
     
-    % decode symbols into bits using viter
-    vit_bit = viterbiGalileo(dis_1);
+    % decode symbols into bits using viterbi methods
+    vit_bit_1 = viterbiGalileo(dis_1);
+    vit_bit_2 = viterbiGalileo(dis_2);
 
+    % perform cyclical redundancy check
+    CRC_1 = CRC(vit_bit_1);
+    CRC_2 = CRC(vit_bit_2);
 end
