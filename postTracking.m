@@ -18,7 +18,7 @@ if dataset == 1
         trackData(i,:) = trackResults(i).I_P;%#ok<SAGROW> 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackData, tchan);
     [firstPage2, activeChnList] = findPreambles(trackResults, ...
                                                         settings,1:tchan);
 end
@@ -35,7 +35,7 @@ if dataset == 2
     end
         trackData = trackdata;
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackData, tchan);
 end
 
 if dataset == 3
@@ -54,7 +54,7 @@ if dataset == 3
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [bmat, bmatalt] = makebits(trackData, tchan);
     [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
 
 end
@@ -75,7 +75,7 @@ if dataset == 4
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "sum");
+    [bmat, bmatalt] = makebits(trackData, tchan);
     [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
 
 end
@@ -84,14 +84,14 @@ end
 pstarth = NaN * zeros(tchan,length(trackData(1,:))/2); % the h's on the end mean "hold" since we're going to be populating this NaN matrix w our flagging results 
 pstart_alth = pstarth; checkh = pstarth; check_alth = pstarth;
 % extract bits
-for j = 1:tchan
+for j = 1:1
     bits_1= bmat(~isnan(bmat(j,:)));
     bits_2 = bmatalt(~isnan(bmatalt(j,:)));
     
     [pstart,check,firstPage(j)] = ...
-        findsync(bits_1, "bits");
+        findsync(bits_1);
     [pstart_alt,check_alt,firstPage_alt(j)] = ...
-        findsync(bits_2,"bits"); %#ok<SAGROW> 
+        findsync(bits_2); %#ok<SAGROW> 
     
     % re-encode into binary
     bits_1(bits_1 == -1) = 1;

@@ -1,4 +1,4 @@
-function [corr_result,check,firstPage] = findsync(bits, arg)
+function [corr_result,check,firstPage] = findsync(bits)
 %--------------------------------------------------------------------------
 % Description:
 %     
@@ -22,20 +22,18 @@ function [corr_result,check,firstPage] = findsync(bits, arg)
 %     check - the distance between sync flags
 %
 %--------------------------------------------------------------------------
-sync = [1 -1 1 -1 -1  1 1 1 1 1];
-
-if arg == "bits"
+    % define the sync pattern and correlate 
+    sync = [1 -1 1 -1 -1  1 1 1 1 1];
     [corr_result,lags] = xcorr(bits, sync);
     
     % the dicumentation of xcorr helps understand this, but we're only 
-    % intersted in shifting forward, or right, when looking for syncs 
+    % intersted in shifting "forward," or right, when looking for syncs 
     corr_result = corr_result(lags>=0);
     lags = lags(lags>=0);
 
     % determine a threshold cross-correlation that suggests a sync pattern
     th = 8;
     flag = lags(abs(corr_result) >= th);
-    %index = find(abs(corr_result(lags)) >= th);
     check = diff(flag);
 
     for i = 1:length(flag)
@@ -45,23 +43,7 @@ if arg == "bits"
             break;          
         end
     end
-end
 
-if arg == "symbols"
-    % decode bits into symbols
-    trellis = poly2trellis(7,[171 133]);
-    sym = convenc(bits,trellis);  
-
-    % then carry out regular correlation process
-    pstart = xcorr(sym, sync);
-    
-    % determine a threshold cross-correlation that suggests a sync pattern
-    th = max(pstart);
-    flag = find(abs(pstart) >= th);
-    
-    check = diff(flag);
-    pstart = pstart(check == 250); %#ok<NASGU> 
-end
 
 if isempty(firstPage)
     disp('Could not find valid sync pattern in channel!');

@@ -24,28 +24,6 @@ function [bits, bits_alt] = makebits(correlationData, tchan, arg)
 %                i.e. implying we cant know if the sequence was supposed to
 %                start with a 1 or -1 
 %--------------------------------------------------------------------------
-navbit = zeros(tchan,1000);
-navbit_skip = [];
-navbitrel = NaN.*correlationData;
-
-if arg == "bit_twos"
-
-    bmat = NaN * correlationData;
-    for j = 1:tchan
-        navbitrel(j,1:length(correlationData(j,:))) = correlationData(j,:);
-        bitstream = navbitrel(j,:);
-        bitstream = bitstream(~isnan(navbitrel(j,:))); % just the non NaN entries of bitstream
-        odd = 1:2:length(bitstream);
-        for i = 1:length(bitstream)/2
-            bmat(j,i) = sign(bitstream(odd(i)));
-        end
-    end
-
-bmatalt = bmat*-1;
-bits = bmat;
-bits_alt = bmatalt;
-
-end
 
 if arg == "bit_ones"
     
@@ -55,16 +33,4 @@ if arg == "bit_ones"
     bits_alt = -1*bits;
     
 end
-
-if arg == "sum"
-    bmat = NaN * zeros(tchan, length(correlationData(1,:))*.5);
-    for i = 1:tchan
-        Ip = correlationData(i,:);
-        bmat(i,1:length(Ip)/2) = Ip(1:2:end) + Ip(2:2:end);
-    end
-    bits = sign(bmat);
-    bits(bits == 0) = 1;
-    bits_alt = -1*bits;
-end
-
 
