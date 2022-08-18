@@ -1,4 +1,4 @@
-function [bits_tot, bits_alt] = makebits(correlationData, tchan)
+function [bits, bits_alt] = makebits(correlationData, tchan, arg)
 %--------------------------------------------------------------------------
 % Description: 
 %     
@@ -25,16 +25,12 @@ function [bits_tot, bits_alt] = makebits(correlationData, tchan)
 %                start with a 1 or -1 
 %--------------------------------------------------------------------------
 
-    bits_tot = NaN * correlationData(1,:);
 
-    for i = 1:tchan
-        bits = correlationData(i,:);
-        bits(bits > 0)  =  1;
-        bits(bits <= 0) = -1;
-        bits_tot(i,1:length(bits)) = bits;
-    end   
 
-    bits_alt = -1*bits_tot;
-
+    bits = correlationData;
+    bits(bits > 0)  =  1;
+    bits(bits <= 0) = -1;
+    bits_alt = -1*bits;
+    
 end
 

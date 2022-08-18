@@ -84,7 +84,7 @@ end
 pstarth = NaN * zeros(tchan,length(trackData(1,:))/2); % the h's on the end mean "hold" since we're going to be populating this NaN matrix w our flagging results 
 pstart_alth = pstarth; checkh = pstarth; check_alth = pstarth;
 % extract bits
-for j = 1:tchan
+for j = 1:1
     bits_1= bmat(~isnan(bmat(j,:)));
     bits_2 = bmatalt(~isnan(bmatalt(j,:)));
     
