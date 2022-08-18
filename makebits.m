@@ -48,8 +48,10 @@ bits_alt = bmatalt;
 end
 
 if arg == "bit_ones"
-
-    bits = sign(correlationData);
+    
+    bits = correlationData;
+    bits(bits > 0)  =  1;
+    bits(bits <= 0) = -1;
     bits_alt = -1*bits;
     
 end

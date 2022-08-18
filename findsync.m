@@ -23,7 +23,6 @@ function [corr_result,check,firstPage] = findsync(bits, arg)
 %
 %--------------------------------------------------------------------------
 sync = [1 -1 1 -1 -1  1 1 1 1 1];
-firstPage = []; 
 
 if arg == "bits"
     [corr_result,lags] = xcorr(bits, sync);
@@ -36,7 +35,7 @@ if arg == "bits"
     % determine a threshold cross-correlation that suggests a sync pattern
     th = 8;
     flag = lags(abs(corr_result) >= th);
-
+    %index = find(abs(corr_result(lags)) >= th);
     check = diff(flag);
 
     for i = 1:length(flag)
@@ -67,4 +66,4 @@ end
 if isempty(firstPage)
     disp('Could not find valid sync pattern in channel!');
 end
-
+end

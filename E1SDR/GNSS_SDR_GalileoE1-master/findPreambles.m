@@ -86,7 +86,6 @@ for channelNr = activeChnList
     index = find(...
         abs(tlmXcorrResult(xcorrLength : xcorrLength * 2 - 1)) > 8)' + ...
         searchStartOffset;
-    index_store = [];
 
 %% Analyze detected preamble like patterns ================================
     for i = 1:size(index) % For each occurrence

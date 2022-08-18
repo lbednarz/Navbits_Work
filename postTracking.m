@@ -6,18 +6,21 @@ dataset = 1; % change this to pick from available datasets
 addpath(genpath('/home/loganbednarz/Documents/GitHub/')) 
 
 if dataset == 1
-    load('trackResultsBungled.mat')
+    load('trackResultsBungled2.mat')
     stat = [];
     for i = 1:12
      stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
     end
     
     tchan = sum(stat == "T");
+    settings.numberOfChannels = tchan;
     for i = 1:tchan
         trackData(i,:) = trackResults(i).I_P;%#ok<SAGROW> 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
     [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
+    [firstPage2, activeChnList] = findPreambles(trackResults, ...
+                                                        settings,1:tchan);
 end
 
 if dataset == 2
@@ -25,13 +28,14 @@ if dataset == 2
 
     tchan = size(trackData.gale1b.channel); % channels that contain tracking data
     tchan = tchan(2);
+    settings.numberOfChannels = tchan;
 
     for i = 1:tchan
         trackdata(i,:) =trackData.gale1b.channel(i).promptCode; %#ok<SAGROW> 
     end
         trackData = trackdata;
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "sum");
+    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
 end
 
 if dataset == 3
@@ -45,11 +49,12 @@ if dataset == 3
     end
     
     tchan = sum(stat == "T");
+    settings.numberOfChannels = tchan;
     for i = 1:tchan
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan, "sum");
+    [bmat, bmatalt] = makebits(trackData, tchan, "bit_ones");
     [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
 
 end
