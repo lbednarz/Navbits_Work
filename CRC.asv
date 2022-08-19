@@ -42,16 +42,14 @@ function [CRCresult] = CRC(viterbi_output)
         Polynomials = zeros(1,25);
         index = [0, 1, 3, 4, 5, 6, 7, 10, 11, 14, 17, 18, 23, 24] + 1;
         Polynomials(1,index) = 1;
-        % want this in descending powers of x
         Polynomials = flip(Polynomials,2);
 
         % implement CRC.
-        R = length(Polynomials) - 1; 
-        % carry out polynomial division and compare to 24 bit CRC
+        R=length(Polynomials)-1; 
         [~,r] = deconv(nomPage,Polynomials);
-        r2 = mod(r(end-R+1:end),2);
+        r2=mod(r(end-R+1:end),2);
 
-        % Record the status and the data bits for every word if CRC is passed.
+        %Record the status and the data bits for every word if CRC is passed.
         if sum(r2==0)==length(r2)
             CRCresult.result(i) = 0;
             WordContent =[Page(3:120-6),Page(123:138)];

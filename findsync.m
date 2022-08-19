@@ -22,6 +22,7 @@ function [corr_result,check,firstPage] = findsync(bits)
 %     check - the distance between sync flags
 %
 %--------------------------------------------------------------------------
+    
     % define the sync pattern and correlate 
     sync = [1 -1 1 -1 -1  1 1 1 1 1];
     [corr_result,lags] = xcorr(bits, sync);
@@ -45,7 +46,7 @@ function [corr_result,check,firstPage] = findsync(bits)
     end
 
 
-if isempty(firstPage)
-    disp('Could not find valid sync pattern in channel!');
-end
+    if isempty(firstPage)
+        disp('Could not find valid sync pattern in channel!');
+    end
 end
