@@ -1,24 +1,5 @@
 function [bits, bits_alt] = decodeEphemeris()
 
-% 
-% %runoff = length(decoded_1)-floor(length(decoded)/240)*240; % left over symbols
-% 
-% % look for sync 
-% start_1 = strfind(bits_deint_1,sync);
-% start_2 = strfind(bits_deint_2,sync);
-% check_1 = diff(start_1);
-% check_2 = diff(start_2);
-
-% %grab all sync beginnings 
-% for i = 1:length(start_1)
-%     bits(1+240*(i-1):240*i) = pstream(start_1(i):start_1(i)+240-1); 
-%     bitsArranged = num2str(bits);
-% end
-% 
-% % trying to find form that keywords like 
-% test = char(bitsArranged);
-% test2 = reshape(test,1,[]);
-
 % % how many digits of PI galileo uses for their calculations 
 % galileoPi = 3.1415926535898;
 % 

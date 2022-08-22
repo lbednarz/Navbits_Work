@@ -23,6 +23,12 @@ function [corr_result,check,firstPage] = findsync(bits)
 %
 %--------------------------------------------------------------------------
     
+
+    % Preamble search can be delayed to a later point in the tracking results
+    % to avoid noise due to tracking loop transients 
+    searchStartOffset = 50;
+    bits = bits(searchStartOffset+1:end);
+
     % define the sync pattern and correlate 
     sync = [1 -1 1 -1 -1  1 1 1 1 1];
     [corr_result,lags] = xcorr(bits, sync);
@@ -34,14 +40,16 @@ function [corr_result,check,firstPage] = findsync(bits)
 
     % determine a threshold cross-correlation that suggests a sync pattern
     th = 8;
-    flag = lags(abs(corr_result) >= th);
+    flag = lags(abs(corr_result) >= th) + searchStartOffset;
     check = diff(flag);
 
+    count = 1;
     for i = 1:length(flag)
         flag2 = flag - flag(i);
         if (~isempty(find(flag2 == 250, 1)))
-            firstPage = flag(i);
-            break;          
+            firstPage(count) = flag(i); %#ok<AGROW> 
+            count = count + 1;
+            % break;          
         end
     end
 
@@ -49,4 +57,5 @@ function [corr_result,check,firstPage] = findsync(bits)
     if isempty(firstPage)
         disp('Could not find valid sync pattern in channel!');
     end
+
 end

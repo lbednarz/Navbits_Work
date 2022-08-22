@@ -3,22 +3,22 @@ clc; clear; close all
 dataset = 1; % change this to pick from available datasets
 
 % add all subfolders to execution
-addpath(genpath('/home/loganbednarz/Documents/GitHub/')) 
+addpath(genpath('C:\Users\logan\Desktop\Navbit_Work')) 
 
 if dataset == 1
     load('trackResultsBungled2.mat')
     stat = [];
     for i = 1:12
-     stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
+     stat = [trackResults(i).status, " ", stat]; %#ok<AGROW> 
     end
     
     tchan = sum(stat == "T");
     settings.numberOfChannels = tchan;
     for i = 1:tchan
-        trackData(i,:) = trackResults(i).I_P;%#ok<SAGROW> 
+        trackData(i,:) = trackResults(i).I_P; %#ok<SAGROW> 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan);
+    [bmat, bmatalt] = makebits(trackData);
     [firstPage2, activeChnList] = findPreambles(trackResults, ...
                                                         settings,1:tchan);
 end
@@ -35,7 +35,7 @@ if dataset == 2
     end
         trackData = trackdata;
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan);
+    [bmat, bmatalt] = makebits(trackData);
 end
 
 if dataset == 3
@@ -54,8 +54,8 @@ if dataset == 3
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan);
-    [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+    [bmat, bmatalt] = makebits(trackData);
+    [firstPage2, activeChnList] = findPreambles(trackResults, settings,activeChnList);
 
 end
 
@@ -81,12 +81,10 @@ if dataset == 4
 end
 %% find preambles 
 
-pstarth = NaN * zeros(tchan,length(trackData(1,:))/2); % the h's on the end mean "hold" since we're going to be populating this NaN matrix w our flagging results 
-pstart_alth = pstarth; checkh = pstarth; check_alth = pstarth;
 % extract bits
-for j = 1:tchan
-    bits_1= bmat(~isnan(bmat(j,:)));
-    bits_2 = bmatalt(~isnan(bmatalt(j,:)));
+for j = 1:1
+    bits_1= bmat(j,~isnan(bmat(j,:)));
+    bits_2 = bmatalt(j,~isnan(bmatalt(j,:)));
     
     [pstart,check,firstPage] = ...
         findsync(bits_1);
@@ -102,8 +100,8 @@ for j = 1:tchan
     bits_2(bits_2 == 1) = 0;
 
     % get deinterleved symbols
-    dis_1 = makepages(bits_1,firstPage);
-    dis_2 = makepages(bits_2,firstPage_alt);
+    dis_1 = makepages(bits_1,firstPage(1));
+    dis_2 = makepages(bits_2,firstPage_alt(1));
     
     % decode symbols into bits using viterbi methods
     vit_bit_1 = viterbiGalileo(dis_1);
