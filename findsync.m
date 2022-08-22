@@ -40,7 +40,8 @@ function [corr_result,check,firstPage] = findsync(bits)
 
     % determine a threshold cross-correlation that suggests a sync pattern
     th = 8;
-    flag = lags(abs(corr_result) >= th) + searchStartOffset;
+    % add 1 to account for lags starting at 0
+    flag = lags(abs(corr_result) >= th) + searchStartOffset + 1;
     check = diff(flag);
 
     count = 1;
@@ -48,8 +49,7 @@ function [corr_result,check,firstPage] = findsync(bits)
         flag2 = flag - flag(i);
         if (~isempty(find(flag2 == 250, 1)))
             firstPage(count) = flag(i); %#ok<AGROW> 
-            count = count + 1;
-            % break;          
+            count = count + 1;         
         end
     end
 
