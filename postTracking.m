@@ -55,7 +55,7 @@ if dataset == 3
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
     [bmat, bmatalt] = makebits(trackData);
-    [firstPage2, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+    [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
 
 end
 
@@ -82,13 +82,13 @@ end
 %% find preambles 
 
 % extract bits
-for j = 1:1
+for j = 1:tchan
     bits_1= bmat(j,~isnan(bmat(j,:)));
     bits_2 = bmatalt(j,~isnan(bmatalt(j,:)));
     
-    [pstart,check,firstPage] = ...
+    [pstart,check,firstPage(j)] = ...
         findsync(bits_1);
-    [pstart_alt,check_alt,firstPage_alt] = ...
+    [pstart_alt,check_alt,firstPage_alt(j)] = ...
         findsync(bits_2); 
     
     % re-encode into binary
