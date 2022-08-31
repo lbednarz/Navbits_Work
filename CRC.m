@@ -21,7 +21,7 @@ function [CRCresult] = CRC(viterbi_output)
 %--------------------------------------------------------------------------
 
     % Calculate the total nominal page number need to be processed.
-    PageNr = floor((length(viterbi_output)-1)/240);
+    PageNr = floor((length(viterbi_output))/240);
     % adjust the start point according to page type (odd or even).
     if viterbi_output(1) == 0
         startPoint =1;

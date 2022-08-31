@@ -17,8 +17,8 @@ for i = 1:PageNr
         symbols = dis((i-1)*240+1:i*240);
 
         % Convert to symbol.(240 symbols)
-        symbols (symbols == 1 ) =  -1;
-        symbols (symbols == 0 ) =   1;
+%         symbols (symbols == 1 ) =  -1;
+%         symbols (symbols == 0 ) =   1;
 
         %Take into account the NOT gate in G2 polynomial (Galileo ICD Figure 13, FEC encoder),figure 13. Convolutional Coding Scheme
         symbols(2:2:end)=-1*symbols(2:2:end);

@@ -69,6 +69,8 @@ if dataset == 3
     [firstPage2, activeChnList] = findPreambles(trackResults, settings,activeChnList);
     decodeInterResult = decodeInterleaving(trackResults, settings, ...
                                    firstPage2, 1:tchan , zeros(1,tchan));
+    decodeFECResult = decodeFEC(decodeInterResult, settings, firstPage2 , activeChnList);
+    CRCresult = cyclicRedundancyCheck(decodeFECResult, activeChnList);
 end
 
 if dataset == 4 
@@ -103,14 +105,6 @@ for j = 1:1
     [pstart_alt,check_alt,firstPage_alt] = ...
         findsync(bits_2); 
 
-    %firstPage
-
-    % re-encode into binary
-    bits_1(bits_1 ==  1) = 0;
-    bits_1(bits_1 == -1) = 1; 
-    bits_2(bits_2 ==  1) = 0;
-    bits_2(bits_2 == -1) = 1;
-
     % get deinterleved symbols
     dis_1 = makepages(bits_1,firstPage(2));
     dis_2 = makepages(bits_2,firstPage_alt(2));
@@ -122,4 +116,7 @@ for j = 1:1
     % perform cyclical redundancy check
     CRC_1 = CRC(vit_bit_1);
     CRC_2 = CRC(vit_bit_2);
+
+    % decode words
+    
 end
