@@ -25,7 +25,6 @@ function [bits, bits_alt] = makebits(correlationData)
 %                start with a 1 or -1 
 %--------------------------------------------------------------------------
 
-
     bits = correlationData;
     bits(bits > 0)  =  1;
     bits(bits <= 0) = -1;

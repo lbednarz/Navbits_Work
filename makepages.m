@@ -22,20 +22,15 @@ function [dis] = makepages(bits, firstPage)
 % pull all relevant bits 
 
 bits = bits(firstPage:end);
+dis = [];
 
 for j = 1:floor(length(bits)/250)
 
     sym = bits((j-1)*250 + 11:250*j);
 
-    % de-interleve
-    bits_deint= [];
+    % de-interleve    
+    page = reshape(sym,30,8);
     
-    for i = 1:floor(length(sym)/240)
-        deint = sym((i-1)*240+1:240*i); % grab one interleaved frame 
-        
-        page = reshape(deint,30,8);
-    
-        bits_deint = horzcat(bits_deint,reshape(page',1,[])); %#ok<AGROW> 
-    end
-    dis((j-1)*240+1:j*240) = bits_deint;
+    dis = horzcat(dis,reshape(page',1,[])); %#ok<AGROW> 
+
 end

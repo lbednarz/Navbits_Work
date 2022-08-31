@@ -1,6 +1,6 @@
 clc; clear; close all
 
-dataset = 1; % change this to pick from available datasets
+dataset = 3; % change this to pick from available datasets
 
 % add all subfolders to execution
 addpath(genpath('C:\Users\logan\Desktop\Navbit_Work')) 
@@ -14,15 +14,21 @@ if dataset == 1
     
     tchan = sum(stat == "T");
     settings.numberOfChannels = tchan;
+    settings.symbolRate = int32 (250);
+    settsearchStartOffset = 50;
     for i = 1:tchan
         trackData(i,:) = trackResults(i).I_P; %#ok<SAGROW> 
     end
+    settings.msToProcess = length(trackData(1,:))*4; %2*60*1000;
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData);
+    [bmat, bmatalt] = makebits(trackData,settsearchStartOffset);
     [firstPage2, activeChnList] = findPreambles(trackResults, ...
                                                         settings,1:tchan);
+    decodeInterResult = decodeInterleaving(trackResults, settings, ...
+                                   firstPage2, 1:tchan , zeros(1,tchan));
 end
 
+%% other datasets
 if dataset == 2
     load('trackData_GalileoE1_Chapter4.mat')
 
@@ -33,9 +39,12 @@ if dataset == 2
     for i = 1:tchan
         trackdata(i,:) =trackData.gale1b.channel(i).promptCode; %#ok<SAGROW> 
     end
+    settings.symbolRate = int32 (250);
+    settsearchStartOffset = 50; 
         trackData = trackdata;
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
     [bmat, bmatalt] = makebits(trackData);
+    
 end
 
 if dataset == 3
@@ -47,16 +56,19 @@ if dataset == 3
     for i = 1:6
      stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
     end
-    
     tchan = sum(stat == "T");
+    settings.numberOfChannels = tchan;
+    settings.symbolRate = int32 (250);
+    settsearchStartOffset = 50;
     settings.numberOfChannels = tchan;
     for i = 1:tchan
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
     [bmat, bmatalt] = makebits(trackData);
-    [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
-
+    [firstPage2, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+    decodeInterResult = decodeInterleaving(trackResults, settings, ...
+                                   firstPage2, 1:tchan , zeros(1,tchan));
 end
 
 if dataset == 4 
@@ -82,26 +94,26 @@ end
 %% find preambles 
 
 % extract bits
-for j = 1:tchan
+for j = 1:1
     bits_1= bmat(j,~isnan(bmat(j,:)));
     bits_2 = bmatalt(j,~isnan(bmatalt(j,:)));
     
-    [pstart,check,firstPage(j)] = ...
+    [pstart,check,firstPage] = ...
         findsync(bits_1);
-    [pstart_alt,check_alt,firstPage_alt(j)] = ...
+    [pstart_alt,check_alt,firstPage_alt] = ...
         findsync(bits_2); 
-    
+
+    %firstPage
+
     % re-encode into binary
-    bits_1(bits_1 == -1) = 1;
-    bits_1(bits_1 == 0) = 1;
-    bits_1(bits_1 == 1) = 0;
+    bits_1(bits_1 ==  1) = 0;
+    bits_1(bits_1 == -1) = 1; 
+    bits_2(bits_2 ==  1) = 0;
     bits_2(bits_2 == -1) = 1;
-    bits_2(bits_2 == 0) = 1;
-    bits_2(bits_2 == 1) = 0;
 
     % get deinterleved symbols
-    dis_1 = makepages(bits_1,firstPage(1));
-    dis_2 = makepages(bits_2,firstPage_alt(1));
+    dis_1 = makepages(bits_1,firstPage(2));
+    dis_2 = makepages(bits_2,firstPage_alt(2));
     
     % decode symbols into bits using viterbi methods
     vit_bit_1 = viterbiGalileo(dis_1);

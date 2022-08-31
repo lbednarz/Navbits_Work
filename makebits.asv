@@ -1,4 +1,4 @@
-function [bits, bits_alt] = makebits(correlationData, tchan, arg)
+function [bits, bits_alt] = makebits(correlationData)
 %--------------------------------------------------------------------------
 % Description: 
 %     
@@ -25,12 +25,10 @@ function [bits, bits_alt] = makebits(correlationData, tchan, arg)
 %                start with a 1 or -1 
 %--------------------------------------------------------------------------
 
-
-
-    bits = correlationData;
+    bits = correlationData;%(searchStartOffset+1:end);
     bits(bits > 0)  =  1;
     bits(bits <= 0) = -1;
     bits_alt = -1*bits;
-    
+
 end
 
