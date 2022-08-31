@@ -96,7 +96,7 @@ end
 %% find preambles 
 
 % extract bits
-for j = 1:1
+for j = 1:tchan
     bits_1= bmat(j,~isnan(bmat(j,:)));
     bits_2 = bmatalt(j,~isnan(bmatalt(j,:)));
     

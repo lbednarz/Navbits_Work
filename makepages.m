@@ -22,15 +22,15 @@ function [dis] = makepages(bits, firstPage)
 % pull all relevant bits 
 
 bits = bits(firstPage:end);
-dis = [];
+dis= [];
 
 for j = 1:floor(length(bits)/250)
 
+    % grab 240 symbols after sync patterns. This is a nominal page.
     sym = bits((j-1)*250 + 11:250*j);
 
-    % de-interleve    
+    % de-interleve
     page = reshape(sym,30,8);
-    
     dis = horzcat(dis,reshape(page',1,[])); %#ok<AGROW> 
 
 end
