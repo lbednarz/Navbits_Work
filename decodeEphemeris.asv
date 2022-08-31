@@ -3,7 +3,7 @@ function [eph, TOWSecond] = decodeEphemeris(CRC)
 % Description:
 %     
 %     This function takes in the CRC-validated navbit stream (after viterbi
-%     decoding) and performs the ephemeris decoding. 
+%     decoding) and performs the ephemeris decoding
 %
 % Inputs: 
 % 

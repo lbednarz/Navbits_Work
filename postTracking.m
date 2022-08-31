@@ -96,7 +96,7 @@ end
 %% find preambles 
 
 % extract bits
-for j = 1:tchan
+for j = 1:1
     bits_1= bmat(j,~isnan(bmat(j,:)));
     bits_2 = bmatalt(j,~isnan(bmatalt(j,:)));
     
@@ -118,5 +118,5 @@ for j = 1:tchan
     CRC_2 = CRC(vit_bit_2);
 
     % decode words
-    
+    decodeEphemeris(CRC_1);
 end
