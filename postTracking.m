@@ -95,6 +95,8 @@ if dataset == 4
 end
 %% find preambles 
 
+count = 1;
+
 % extract bits
 for j = 1:1
     bits_1= bmat(j,~isnan(bmat(j,:)));
@@ -106,8 +108,8 @@ for j = 1:1
         findsync(bits_2); 
 
     % get deinterleved symbols
-    dis_1 = makepages(bits_1,firstPage(2));
-    dis_2 = makepages(bits_2,firstPage_alt(2));
+    dis_1 = makepages(bits_1,firstPage(1));
+    dis_2 = makepages(bits_2,firstPage_alt(1));
     
     % decode symbols into bits using viterbi methods
     vit_bit_1 = viterbiGalileo(dis_1);
@@ -117,6 +119,21 @@ for j = 1:1
     CRC_1 = CRC(vit_bit_1);
     CRC_2 = CRC(vit_bit_2);
 
+    while sum(CRC_1.result ~= 0) > length(CRC_1.result)*.2 
+        % get deinterleved symbols
+        dis_1 = makepages(bits_1,firstPage(1+count));
+        dis_2 = makepages(bits_2,firstPage_alt(1+count));
+        
+        % decode symbols into bits using viterbi methods
+        vit_bit_1 = viterbiGalileo(dis_1);
+        vit_bit_2 = viterbiGalileo(dis_2);
+    
+        % perform cyclical redundancy check
+        CRC_1 = CRC(vit_bit_1);
+        CRC_2 = CRC(vit_bit_2);
+        count = count + 1; % try next flag if this one didn't work
+    end
+    
     % decode words
-    decodeEphemeris(CRC_1);
+    [eph, TOWSecond] = decodeEphemeris(CRC_1);
 end

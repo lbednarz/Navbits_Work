@@ -9,6 +9,9 @@ function [CRCresult] = CRC(viterbi_output)
 % 
 %     viterbi_output     - bits after the processing of decoding FEC with
 %                          Viterbi decoder.
+%     
+%     flags              - all indexes where preamble-like patterns were
+%                          found. 
 %
 % Retuns:
 % 
@@ -61,5 +64,5 @@ function [CRCresult] = CRC(viterbi_output)
             CRCresult.result(i) = 1;
         end
     end
-
+    
 end
