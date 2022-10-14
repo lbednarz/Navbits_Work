@@ -1,6 +1,6 @@
 clc; clear; close all
 
-dataset = 3; % change this to pick from available datasets
+dataset = 4; % change this to pick from available datasets
 
 % add all subfolders to execution
 addpath(genpath('C:\Users\logan\Desktop\Navbit_Work')) 
@@ -25,7 +25,7 @@ if dataset == 1
     end
     settings.msToProcess = length(trackData(1,:))*4; %2*60*1000;
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData,settsearchStartOffset);
+    [bmat, bmatalt] = makebits(trackData);
     [firstPage2, activeChnList] = findPreambles(trackResults, ...
                                                         settings,1:tchan);
     decodeInterResult = decodeInterleaving(trackResults, settings, ...
@@ -102,8 +102,9 @@ if dataset == 4
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
-    [bmat, bmatalt] = makebits(trackData, tchan);
+    [bmat, bmatalt] = makebits(trackData);
     [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+    [PageStart,activeChnList] = findPreambles(trackResults, settings,activeChnList);
 
 end
 %% find preambles 
@@ -145,6 +146,10 @@ for j = 1:tchan
 
         % try next flag if this one didn't work
         count = count + 1; 
+        if count+1 > length(firstPage)
+            disp('Could not validate via CRC! Exiting.');
+            return; 
+        end
     end
 
     if sum(CRC_2.result ~= 0) < length(CRC_2.result)*.2
@@ -152,8 +157,20 @@ for j = 1:tchan
     end
     
     % decode words
-    [eph, TOW] = decodeEphemeris(CRC_1);
+    [eph(trackResults(j).PRN), TOW] = decodeEphemeris(CRC_1);
     fp_final(j) = firstPage(count); %#ok<SAGROW> 
 end
 
-navSolutions = PVT(activeChnList, TOW, trackResults, settings, PageStart);
+navSolutions = PVT(activeChnList, TOW, trackResults, settings, PageStart,eph);
+settings = initSettings();
+%plotNavigation(navSolutions, settings);
+
+ %--- Satellite sky plot -----------------------------------------------
+ handles(1, 1) = subplot(1, 1, [1, 1]);  
+    skyPlot(handles(1, 1), ...
+            navSolutions.channel.az, ...
+            navSolutions.channel.el, ...
+            navSolutions.channel.PRN(:, 1));
+        
+    title (handles(1, 1), ['Sky plot (mean PDOP: ', ...
+                               num2str(mean(navSolutions.DOP(2,:))), ')']);  

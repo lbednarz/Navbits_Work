@@ -29,10 +29,10 @@ for j = 1:floor(length(CRC.Word)/240)
     for i = 1:15 
         % get one word and add it to the subframe
         word = CRC.Word(1+(i-1)*128:i*128);
-        subframebits = dec2bin(word);
+        subframebits = dec2bin(word)';
         
         % get word type 
-        wt = bin2dec(subframebits(1:6)');
+        wt = bin2dec(subframebits(1:6));
 
         assert(wt <= 15 && wt >= 0);
 

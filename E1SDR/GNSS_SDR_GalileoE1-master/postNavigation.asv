@@ -1,10 +1,44 @@
-function [navSolutions] = PVT(activeChnList, TOW, trackResults, settings, PageStart, eph)
+function [navSolutions, eph] = postNavigation(trackResults, settings)
+%Function calculates navigation solutions for the receiver (pseudoranges,
+%positions). At the end it converts coordinates from the WGS84 system to
+%the UTM, geocentric or any additional coordinate system.
+%
+%[navSolutions, eph] = postNavigation(trackResults, settings)
+%
+%   Inputs:
+%       trackResults    - results from the tracking function (structure
+%                       array).
+%       settings        - receiver settings.
+%   Outputs:
+%       navSolutions    - contains measured pseudoranges, receiver
+%                       clock error, receiver coordinates in several
+%                       coordinate systems (at least ECEF and UTM).
+%       eph             - received ephemerides of all SV (structure array).
 
-% process from beginning of solvable period. This means understanding that 
-% each value of Ip is 4 ms long. Then you will process this remaining data
-% in batches that are 1 nav-solve period long.
+%--------------------------------------------------------------------------
+%                           SoftGNSS v3.0
+% 
+% Copyright (C) Darius Plausinaitis
+% Written by Darius Plausinaitis with help from Kristin Larson
+%--------------------------------------------------------------------------
+%This program is free software; you can redistribute it and/or
+%modify it under the terms of the GNU General Public License
+%as published by the Free Software Foundation; either version 2
+%of the License, or (at your option) any later version.
+%
+%This program is distributed in the hope that it will be useful,
+%but WITHOUT ANY WARRANTY; without even the implied warranty of
+%MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%GNU General Public License for more details.
+%
+%You should have received a copy of the GNU General Public License
+%along with this program; if not, write to the Free Software
+%Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+%USA.
+%--------------------------------------------------------------------------
 
-%% Initialization =========================================================
+%CVS record:
+%$Id: postNavigation.m,v 1.1.2.22 2006/08/09 17:20:11 dpl Exp $
 
 %% Check is there enough data to obtain any navigation solution ===========
 % It is necessary to have at least three subframes (number 1, 2 and 3) to
@@ -20,9 +54,40 @@ if (settings.msToProcess < 36000) || (sum([trackResults.status] ~= '-') < 4)
     % Show the error message and exit
     disp('Record is to short or too few satellites tracked. Exiting!');
     navSolutions = [];
-    %eph          = [];
+    eph          = [];
     return
 end
+%% find invert imformation with the aid of pilot channel 
+[invertSymbol, activeChnList] = findInvertSymbol(trackResults); 
+
+%% Find preamble start positions ==========================================
+[PageStart,activeChnList] = findPreambles(trackResults, settings, activeChnList);
+
+%% Decode interleaving
+[decodeInterResult]=decodeInterleaving(trackResults, settings, PageStart, activeChnList, invertSymbol);
+
+%% Decode convoluntional encoder
+[decodeFECResult]=decodeFEC(decodeInterResult, settings, PageStart , activeChnList);
+
+%% CRC and Convert message to word type
+
+[CRCresult] = cyclicRedundancyCheck(decodeFECResult, activeChnList);
+
+%% Decode ephemerides =====================================================
+for channelNr = activeChnList
+    [eph(trackResults(channelNr).PRN),TOW] = decodeGalileoEphemeris(CRCresult,channelNr);
+end
+
+%% Check if the number of satellites is still above 3 =====================
+if (isempty(activeChnList) || (size(activeChnList, 2) < 4))
+    % Show error message and exit
+    disp('Too few satellites with ephemeris data for postion calculations. Exiting!');
+    navSolutions = [];
+    eph          = [];
+    return
+end
+
+%% Initialization =========================================================
 
 % Set the satellite elevations array to INF to include all satellites for
 % the first calculation of receiver position. There is no reference point

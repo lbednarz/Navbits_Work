@@ -232,3 +232,6 @@ for currMeasNr = 1:fix((settings.msToProcess - 4 * max(PageStart)) / ...
     transmitTime = transmitTime + settings.navSolPeriod / 1000;
 
 end %for currMeasNr...
+
+settings = initSettings();
+plotNavigation(navSolutions, settings);
