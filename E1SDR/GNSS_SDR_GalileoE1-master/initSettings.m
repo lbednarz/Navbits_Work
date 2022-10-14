@@ -37,7 +37,7 @@ settings.skipNumberOfBytes     = 10;
 % Data type used to store one sample
 settings.dataType           = 'int16';
 settings.fileName           = ...
-   'D:\接收机资料\中频数据\L125_III1b_210s_L1.bin';
+   'C:\Users\logan\Downloads\cleanStatic_galileo.bin';
 % File Types
 %1 - 8 bit real samples S0,S1,S2,...
 %2 - 8 bit I/Q samples I0,Q0,I1,Q1,I2,Q2,...
@@ -67,7 +67,7 @@ settings.skipAcquisition    = 0;
 % List of satellites to look for. Some satellites can be excluded to speed
 % up acquisition
 % settings.acqSatelliteList  
-settings.acqSatelliteList   = 1:27;
+settings.acqSatelliteList   = 1:50;
 % Band around IF to search for satellite signal. Depends on max Doppler
 settings.acqSearchBand      = 14;           %[kHz]
 % Threshold for the signal presence decision rule

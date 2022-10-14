@@ -13,9 +13,13 @@ if dataset == 1
     end
     
     tchan = sum(stat == "T");
+    settings.msToProcess        = 40000;        %[ms]      
     settings.numberOfChannels = tchan;
     settings.symbolRate = int32 (250);
     settsearchStartOffset = 50;
+    settings.navSolRate = 5; %[Hz]
+    settings.navSolPeriod = 1000/settings.navSolRate; %ms
+
     for i = 1:tchan
         trackData(i,:) = trackResults(i).I_P; %#ok<SAGROW> 
     end
@@ -57,20 +61,29 @@ if dataset == 3
      stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
     end
     tchan = sum(stat == "T");
+
+    %settings
     settings.numberOfChannels = tchan;
     settings.symbolRate = int32 (250);
-    settsearchStartOffset = 50;
     settings.numberOfChannels = tchan;
+    settings.msToProcess        = 40000;        %[ms]      
+    settings.symbolRate = int32 (250);
+    settsearchStartOffset = 50;
+    settings.navSolRate = 5; %[Hz]
+    settings.navSolPeriod = 1000/settings.navSolRate; %ms
+    
     for i = 1:tchan
         trackData(i,:) = trackResults(i).data_I_P; 
     end
     % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
     [bmat, bmatalt] = makebits(trackData);
     [firstPage2, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+    [PageStart,activeChnList] = findPreambles(trackResults, settings,activeChnList);
     decodeInterResult = decodeInterleaving(trackResults, settings, ...
                                    firstPage2, 1:tchan , zeros(1,tchan));
     decodeFECResult = decodeFEC(decodeInterResult, settings, firstPage2 , activeChnList);
     CRCresult = cyclicRedundancyCheck(decodeFECResult, activeChnList);
+    settings.msToProcess = length(trackData(1,:))*4; %2*60*1000;
 end
 
 if dataset == 4 
@@ -96,44 +109,51 @@ end
 %% find preambles 
 
 count = 1;
+fp_final = [];
 
 % extract bits
-for j = 1:1
+for j = 1:tchan
     bits_1= bmat(j,~isnan(bmat(j,:)));
-    bits_2 = bmatalt(j,~isnan(bmatalt(j,:)));
     
-    [pstart,check,firstPage] = ...
-        findsync(bits_1);
-    [pstart_alt,check_alt,firstPage_alt] = ...
-        findsync(bits_2); 
+    [pstart,check,firstPage] = findsync(bits_1);
 
     % get deinterleved symbols
-    dis_1 = makepages(bits_1,firstPage(1));
-    dis_2 = makepages(bits_2,firstPage_alt(1));
+    dis = makepages(bits_1,firstPage(1));
     
     % decode symbols into bits using viterbi methods
-    vit_bit_1 = viterbiGalileo(dis_1);
-    vit_bit_2 = viterbiGalileo(dis_2);
+    vit_bit = viterbiGalileo(dis);
 
     % perform cyclical redundancy check
-    CRC_1 = CRC(vit_bit_1);
-    CRC_2 = CRC(vit_bit_2);
+    CRC_1 = CRC(vit_bit);
+    CRC_2 = CRC_1;
 
-    while sum(CRC_1.result ~= 0) > length(CRC_1.result)*.2 
+    while sum(CRC_1.result ~= 0) > length(CRC_1.result)*.2 && ...
+            sum(CRC_2.result ~= 0) > length(CRC_2.result)*.2
         % get deinterleved symbols
-        dis_1 = makepages(bits_1,firstPage(1+count));
-        dis_2 = makepages(bits_2,firstPage_alt(1+count));
+        dis = makepages(bits_1,firstPage(1+count));
         
         % decode symbols into bits using viterbi methods
-        vit_bit_1 = viterbiGalileo(dis_1);
-        vit_bit_2 = viterbiGalileo(dis_2);
+        vit_bit = viterbiGalileo(dis);
     
         % perform cyclical redundancy check
-        CRC_1 = CRC(vit_bit_1);
-        CRC_2 = CRC(vit_bit_2);
-        count = count + 1; % try next flag if this one didn't work
+        CRC_1 = CRC(vit_bit);
+
+        if sum(CRC_1.result ~= 0) > length(CRC_1.result)*.2 
+            vit_bit_2 = viterbiGalileo(-1*dis);
+            CRC_2 = CRC(vit_bit_2);
+        end
+
+        % try next flag if this one didn't work
+        count = count + 1; 
+    end
+
+    if sum(CRC_2.result ~= 0) < length(CRC_2.result)*.2
+        CRC_1 = CRC_2;
     end
     
     % decode words
-    [eph, TOWSecond] = decodeEphemeris(CRC_1);
+    [eph, TOW] = decodeEphemeris(CRC_1);
+    fp_final(j) = firstPage(count); %#ok<SAGROW> 
 end
+
+navSolutions = PVT(activeChnList, TOW, trackResults, settings, PageStart);

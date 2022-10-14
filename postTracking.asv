@@ -1,0 +1,301 @@
+clc; clear; close all
+
+dataset = 3; % change this to pick from available datasets
+
+% add all subfolders to execution
+addpath(genpath('C:\Users\logan\Desktop\Navbit_Work')) 
+
+if dataset == 1
+    load('trackResultsBungled2.mat')
+    stat = [];
+    for i = 1:12
+     stat = [trackResults(i).status, " ", stat]; %#ok<AGROW> 
+    end
+    
+    tchan = sum(stat == "T");
+    settings.msToProcess        = 40000;        %[ms]      
+    settings.numberOfChannels = tchan;
+    settings.symbolRate = int32 (250);
+    settsearchStartOffset = 50;
+    settings.navSolRate = 5; %[Hz]
+    settings.navSolPeriod = 1000/settings.navSolRate; %ms
+
+    for i = 1:tchan
+        trackData(i,:) = trackResults(i).I_P; %#ok<SAGROW> 
+    end
+    settings.msToProcess = length(trackData(1,:))*4; %2*60*1000;
+    % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
+    [bmat, bmatalt] = makebits(trackData,settsearchStartOffset);
+    [firstPage2, activeChnList] = findPreambles(trackResults, ...
+                                                        settings,1:tchan);
+    decodeInterResult = decodeInterleaving(trackResults, settings, ...
+                                   firstPage2, 1:tchan , zeros(1,tchan));
+end
+
+%% other datasets
+if dataset == 2
+    load('trackData_GalileoE1_Chapter4.mat')
+
+    tchan = size(trackData.gale1b.channel); % channels that contain tracking data
+    tchan = tchan(2);
+    settings.numberOfChannels = tchan;
+
+    for i = 1:tchan
+        trackdata(i,:) =trackData.gale1b.channel(i).promptCode; %#ok<SAGROW> 
+    end
+    settings.symbolRate = int32 (250);
+    settsearchStartOffset = 50; 
+        trackData = trackdata;
+    % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
+    [bmat, bmatalt] = makebits(trackData);
+    
+end
+
+if dataset == 3
+    load('trackingResults.mat')
+    settings.numberOfChannels = 6;
+    activeChnList = find([trackResults.status] ~= '-');
+
+    stat = [];
+    for i = 1:6
+     stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
+    end
+    tchan = sum(stat == "T");
+    settings.numberOfChannels = tchan;
+    settings.symbolRate = int32 (250);
+    settsearchStartOffset = 50;
+    settings.numberOfChannels = tchan;
+    for i = 1:tchan
+        trackData(i,:) = trackResults(i).data_I_P; 
+    end
+    % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
+    [bmat, bmatalt] = makebits(trackData);
+    [firstPage2, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+    decodeInterResult = decodeInterleaving(trackResults, settings, ...
+                                   firstPage2, 1:tchan , zeros(1,tchan));
+    decodeFECResult = decodeFEC(decodeInterResult, settings, firstPage2 , activeChnList);
+    CRCresult = cyclicRedundancyCheck(decodeFECResult, activeChnList);
+end
+
+if dataset == 4 
+    load('OAKBAT.mat')
+    
+    settings.numberOfChannels = 6;
+    activeChnList = find([trackResults.status] ~= '-');
+
+    stat = [];
+    for i = 1:6
+     stat = [trackResults(i).status, " ", stat];  %#ok<AGROW> 
+    end
+    
+    tchan = sum(stat == "T");
+    for i = 1:tchan
+        trackData(i,:) = trackResults(i).data_I_P; 
+    end
+    % get possible navbit patterns - carrying the 180 phase ambiguity through this whole process
+    [bmat, bmatalt] = makebits(trackData, tchan);
+    [firstPage, activeChnList] = findPreambles(trackResults, settings,activeChnList);
+
+end
+%% find preambles 
+
+count = 1;
+fp_final = [];
+
+% extract bits
+for j = 1:tchan
+    bits_1= bmat(j,~isnan(bmat(j,:)));
+    
+    [pstart,check,firstPage] = findsync(bits_1);
+
+    % get deinterleved symbols
+    dis = makepages(bits_1,firstPage(1));
+    
+    % decode symbols into bits using viterbi methods
+    vit_bit = viterbiGalileo(dis);
+
+    % perform cyclical redundancy check
+    CRC_1 = CRC(vit_bit);
+    CRC_2 = CRC_1;
+
+    while sum(CRC_1.result ~= 0) > length(CRC_1.result)*.2 && ...
+            sum(CRC_2.result ~= 0) > length(CRC_2.result)*.2
+        % get deinterleved symbols
+        dis = makepages(bits_1,firstPage(1+count));
+        
+        % decode symbols into bits using viterbi methods
+        vit_bit = viterbiGalileo(dis);
+    
+        % perform cyclical redundancy check
+        CRC_1 = CRC(vit_bit);
+
+        if sum(CRC_1.result ~= 0) > length(CRC_1.result)*.2 
+            vit_bit_2 = viterbiGalileo(-1*dis);
+            CRC_2 = CRC(vit_bit_2);
+        end
+
+        % try next flag if this one didn't work
+        count = count + 1; 
+    end
+
+    if sum(CRC_2.result ~= 0) < length(CRC_2.result)*.2
+        CRC_1 = CRC_2;
+    end
+    
+    % decode words
+    [eph, TOWSecond] = decodeEphemeris(CRC_1);
+    fp_final(j) = firstPage(count); %#ok<SAGROW> 
+end
+
+
+
+%% PVT 
+
+% process from beginning of solvable period. This means understanding that 
+% each value of Ip is 4 ms long. Then you will process this remaining data
+% in batches that are 1 nav-solve period long.
+%% Initialization =========================================================
+
+% Set the satellite elevations array to INF to include all satellites for
+% the first calculation of receiver position. There is no reference point
+% to find the elevation angle as there is no receiver position estimate at
+% this point.
+satElev  = inf(1, settings.numberOfChannels);
+
+% Save the active channel list. The list contains satellites that are
+% tracked and have the required ephemeris data. In the next step the list
+% will depend on each satellite's elevation angle, which will change over
+% time.  
+readyChnList = activeChnList;
+
+transmitTime = TOW;
+
+%##########################################################################
+%#   Do the satellite and receiver position calculations                  #
+%##########################################################################
+
+%% Initialization of current measurement ==================================
+for currMeasNr = 1:fix((settings.msToProcess - 4 * max(PageStart)) / ...
+                                                     settings.navSolPeriod)
+
+    % Exclude satellites, that are belove elevation mask 
+    activeChnList = intersect(find(satElev >= settings.elevationMask), ...
+                              readyChnList);
+
+    % Save list of satellites used for position calculation
+    navSolutions.channel.PRN(activeChnList, currMeasNr) = ...
+                                        [trackResults(activeChnList).PRN]; 
+
+    % These two lines help the skyPlot function. The satellites excluded
+    % do to elevation mask will not "jump" to possition (0,0) in the sky
+    % plot.
+    navSolutions.channel.el(:, currMeasNr) = ...
+                                         NaN(settings.numberOfChannels, 1);
+    navSolutions.channel.az(:, currMeasNr) = ...
+                                         NaN(settings.numberOfChannels, 1);
+
+%% Find pseudoranges ======================================================
+    navSolutions.channel.rawP(:, currMeasNr) = calculatePseudoranges(...
+            trackResults, ...
+            PageStart + settings.navSolPeriod / 4 * (currMeasNr-1), ...
+            activeChnList, settings);
+
+%% Find satellites positions and clocks corrections =======================
+    [satPositions, satClkCorr] = satpos(transmitTime, ...
+                                        [trackResults(activeChnList).PRN], ...
+                                        eph, settings);
+
+%pvh log satPositions, clock correction to see if it is jumpy
+%navSolutions.channel.satPositions(currMeasNr,:,:) = satPositions;   % smooth
+%navSolutions.channel.satClkCorr(currMeasNr,:)     = satClkCorr;     % smooth
+                                    
+%% Find receiver position =================================================
+
+    % 3D receiver position can be found only if signals from more than 3
+    % satellites are available  
+    if numel(activeChnList) > 3       % WAS: size ,2. activeChnList is col vec/row vec in different calls!
+
+        %=== Calculate receiver position ==================================
+        % this is grindy
+        [xyzdt, ...
+         navSolutions.channel.el(activeChnList, currMeasNr), ...
+         navSolutions.channel.az(activeChnList, currMeasNr), ...
+         navSolutions.DOP(:, currMeasNr)] = ...
+            leastSquarePos(satPositions, ...
+                           navSolutions.channel.rawP(activeChnList, currMeasNr)' + satClkCorr * settings.c, ...
+                           settings);
+
+        %--- Save results -------------------------------------------------
+        navSolutions.X(currMeasNr)  = xyzdt(1);
+        navSolutions.Y(currMeasNr)  = xyzdt(2);
+        navSolutions.Z(currMeasNr)  = xyzdt(3);
+        navSolutions.dt(currMeasNr) = xyzdt(4);
+
+        % Update the satellites elevations vector
+        satElev = navSolutions.channel.el(:, currMeasNr);
+
+        %=== Correct pseudorange measurements for clocks errors ===========
+        % phahn this is noisy AF due to dt
+        navSolutions.channel.correctedP(activeChnList, currMeasNr) = ...
+                navSolutions.channel.rawP(activeChnList, currMeasNr) + ...
+                satClkCorr' * settings.c + navSolutions.dt(currMeasNr);
+
+%% Coordinate conversion ==================================================
+
+        %=== Convert to geodetic coordinates ==============================
+        [navSolutions.latitude(currMeasNr), ...
+         navSolutions.longitude(currMeasNr), ...
+         navSolutions.height(currMeasNr)] = cart2geo(...
+                                            navSolutions.X(currMeasNr), ...
+                                            navSolutions.Y(currMeasNr), ...
+                                            navSolutions.Z(currMeasNr), ...
+                                            5);
+
+        %=== Convert to UTM coordinate system =============================
+        navSolutions.utmZone = findUtmZone(navSolutions.latitude(currMeasNr), ...
+                                           navSolutions.longitude(currMeasNr));
+
+        [navSolutions.E(currMeasNr), ...
+         navSolutions.N(currMeasNr), ...
+         navSolutions.U(currMeasNr)] = cart2utm(xyzdt(1), xyzdt(2), ...
+                                                xyzdt(3), ...
+                                                navSolutions.utmZone);
+        
+    else % if size(activeChnList, 2) > 3 
+        %--- There are not enough satellites to find 3D position ----------
+        disp(['   Measurement No. ', num2str(currMeasNr), ...
+                       ': Not enough information for position solution.']);
+
+        %--- Set the missing solutions to NaN. These results will be
+        %excluded automatically in all plots. For DOP it is easier to use
+        %zeros. NaN values might need to be excluded from results in some
+        %of further processing to obtain correct results.
+        navSolutions.X(currMeasNr)           = NaN;
+        navSolutions.Y(currMeasNr)           = NaN;
+        navSolutions.Z(currMeasNr)           = NaN;
+        navSolutions.dt(currMeasNr)          = NaN;
+        navSolutions.DOP(:, currMeasNr)      = zeros(5, 1);
+        navSolutions.latitude(currMeasNr)    = NaN;
+        navSolutions.longitude(currMeasNr)   = NaN;
+        navSolutions.height(currMeasNr)      = NaN;
+        navSolutions.E(currMeasNr)           = NaN;
+        navSolutions.N(currMeasNr)           = NaN;
+        navSolutions.U(currMeasNr)           = NaN;
+
+        navSolutions.channel.az(activeChnList, currMeasNr) = ...
+                                             NaN(1, length(activeChnList));
+        navSolutions.channel.el(activeChnList, currMeasNr) = ...
+                                             NaN(1, length(activeChnList));
+
+        % TODO: Know issue. Satellite positions are not updated if the
+        % satellites are excluded do to elevation mask. Therefore rasing
+        % satellites will be not included even if they will be above
+        % elevation mask at some point. This would be a good place to
+        % update positions of the excluded satellites.
+
+    end % if size(activeChnList, 2) > 3
+
+    %=== Update the transmit time ("measurement time") ====================
+    transmitTime = transmitTime + settings.navSolPeriod / 1000;
+
+end %for currMeasNr...

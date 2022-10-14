@@ -31,6 +31,10 @@ function [CRCresult] = CRC(viterbi_output)
     else
         startPoint =121;
     end
+    % adding a measure to be sure indexing will work 
+    while startPoint-1+PageNr*240 > length(viterbi_output)
+        PageNr = PageNr - 1; 
+    end
     % take CRC for process every nominal page
     for i =1:PageNr
 
